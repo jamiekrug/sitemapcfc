@@ -41,8 +41,8 @@ DOCUMENT INFORMATION:
 	</cfscript>
 
 	<cffunction name="init" access="public" output="false" hint="Constructor; initializes sitemap object with a collection of URLs.">
-		<cfargument name="collection" type="any" required="true" hint="The url collection to be represented in a sitemap; acceptable types are a list of URLs, a query or an array of structs. Query or array of structs collection types must have a 'loc' key/column or a mapping in the collectionKeyMap argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML element). Other child tags of the &lt;url&gt; element, as described at http://sitemaps.org/protocol.php, are also valid key/column names (and can also be mapped to respective key/column names, again using the collectionKeyMap argument). 'lastmod' values may be any valid date/time string or object, as they will automatically be converted to proper W3C datetime format when initialized into collection property." />
-		<cfargument name="collectionKeyMap" type="struct" required="false" default="#structNew()#" hint="The mapping of standard sitemaps.org protocol 'url' child element names (#variables.URL_CHILD_KEYS#) to respective keys/columns in collection argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML element)." />
+		<cfargument name="collection" type="any" required="true" hint="The url collection to be represented in a sitemap; acceptable types are a list, a query, an array or an array of structs. Query or array of structs collection types must have a 'loc' key/column or a mapping in the collectionKeyMap argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML element). Other child tags of the &lt;url&gt; element, as described at http://sitemaps.org/protocol.php, are also valid key/column names (and can also be mapped to respective key/column names, again using the collectionKeyMap argument). 'lastmod' values may be any valid date/time string or object, as they will automatically be converted to proper W3C datetime format when initialized into collection property." />
+		<cfargument name="collectionKeyMap" type="struct" required="false" default="#structNew()#" hint="The mapping of standard sitemaps.org protocol 'url' child element names (#variables.URL_CHILD_KEYS#) to respective keys/columns in collection argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML tag)." />
 
 		<cfscript>
 			setCollectionKeyMap(arguments.collectionKeyMap);
@@ -134,41 +134,50 @@ DOCUMENT INFORMATION:
 
 		<cfscript>
 			var result = structNew();
+			var theUrl = arguments.source;
+			var key = '';
 
-			if ( NOT structKeyExists(arguments.source, 'loc') ) {
+			// trim all simple values:
+			for (key IN theUrl) {
+				if ( isSimpleValue( theUrl[key] ) ) {
+					theUrl[key] = trim( theUrl[key] );
+				}
+			}
+
+			if ( NOT structKeyExists(theUrl, 'loc') ) {
 				throwError('loc key is required for each collection item.');
 			}
-			if ( NOT isValid('URL', arguments.source.loc) ) {
+			if ( NOT isValid('URL', theUrl.loc) ) {
 				throwError('loc must be a valid URL.');
 			}
 
-			result.loc = arguments.source.loc;
+			result.loc = theUrl.loc;
 
-			if ( structKeyExists(arguments.source, 'lastmod')
-					AND ( NOT isSimpleValue(arguments.source.lastmod) OR ( isSimpleValue(arguments.source.lastmod) AND arguments.source.lastmod NEQ '' ) )
+			if ( structKeyExists(theUrl, 'lastmod')
+					AND ( NOT isSimpleValue(theUrl.lastmod) OR ( isSimpleValue(theUrl.lastmod) AND theUrl.lastmod NEQ '' ) )
 			) {
-				if ( NOT isValid('date', arguments.source.lastmod) ) {
+				if ( NOT isValid('date', theUrl.lastmod) ) {
 					throwError('lastmod must be a valid date/time string or object.');
 				}
-				result.lastmod = formatAsW3CDateTime(arguments.source.lastmod);
+				result.lastmod = formatAsW3CDateTime(theUrl.lastmod);
 			}
 
-			if ( structKeyExists(arguments.source, 'changefreq')
-					AND ( NOT isSimpleValue(arguments.source.changefreq) OR ( isSimpleValue(arguments.source.changefreq) AND arguments.source.changefreq NEQ '' ) )
+			if ( structKeyExists(theUrl, 'changefreq')
+					AND ( NOT isSimpleValue(theUrl.changefreq) OR ( isSimpleValue(theUrl.changefreq) AND theUrl.changefreq NEQ '' ) )
 			) {
-				if ( NOT listFindNoCase(variables.CHANGEFREQ_VALUES, arguments.source.changefreq) ) {
+				if ( NOT listFindNoCase(variables.CHANGEFREQ_VALUES, theUrl.changefreq) ) {
 					throwError('changefreq must be one of: #variables.CHANGEFREQ_VALUES#.');
 				}
-				result.changefreq = lCase(arguments.source.changefreq);
+				result.changefreq = lCase(theUrl.changefreq);
 			}
 
-			if ( structKeyExists(arguments.source, 'priority')
-					AND ( NOT isSimpleValue(arguments.source.priority) OR ( isSimpleValue(arguments.source.priority) AND arguments.source.priority NEQ '' ) )
+			if ( structKeyExists(theUrl, 'priority')
+					AND ( NOT isSimpleValue(theUrl.priority) OR ( isSimpleValue(theUrl.priority) AND theUrl.priority NEQ '' ) )
 			) {
-				if ( NOT isValid('range', arguments.source.priority, 0, 1) ) {
+				if ( NOT isValid('range', theUrl.priority, 0, 1) ) {
 					throwError('priority valid values range from 0.0 to 1.0.');
 				}
-				result.priority = numberFormat(arguments.source.priority, '9.9');
+				result.priority = numberFormat(theUrl.priority, '9.9');
 			}
 
 			return result;
@@ -189,7 +198,30 @@ DOCUMENT INFORMATION:
 
 
 	<cffunction name="getCollectionFromArray" returntype="array" access="private" output="false">
-		<cfargument name="collection" type="array" required="true" hint="The url collection to be represented in a sitemap." />
+		<cfargument name="collection" type="array" required="true" hint="The url collection to be represented in a sitemap, as a one-dimensional array of string URLs." />
+
+		<cfscript>
+			var result = arrayNew(1);
+			var thisUrl = structNew();
+			var i = '';
+
+			for (i=1; i LTE arrayLen(arguments.collection); i=i+1) {
+				thisUrl['loc'] = arguments.collection[i];
+
+				// clean (and validate) this url item:
+				thisUrl = cleanUrl(thisUrl);
+
+				// append current item to collection:
+				arrayAppend(result, duplicate(thisUrl) );
+			}
+
+			return result;
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="getCollectionFromArrayOfStructs" returntype="array" access="private" output="false">
+		<cfargument name="collection" type="array" required="true" hint="The url collection to be represented in a sitemap, as an array of structs." />
 
 		<cfscript>
 			var result = arrayNew(1);
@@ -226,25 +258,9 @@ DOCUMENT INFORMATION:
 
 
 	<cffunction name="getCollectionFromList" returntype="array" access="private" output="false">
-		<cfargument name="collection" type="string" required="true" hint="The url collection to be represented in a sitemap." />
+		<cfargument name="collection" type="string" required="true" hint="The url collection to be represented in a sitemap, as a comma-delimited array of string URLs." />
 
-		<cfscript>
-			var result = arrayNew(1);
-			var thisUrl = structNew();
-			var i = '';
-
-			for (i=1; i LTE listLen(arguments.collection); i=i+1) {
-				thisUrl['loc'] = listGetAt(arguments.collection, i);
-
-				// clean (and validate) this url item:
-				thisUrl = cleanUrl(thisUrl);
-
-				// append current item to collection:
-				arrayAppend(result, duplicate(thisUrl) );
-			}
-
-			return result;
-		</cfscript>
+		<cfreturn getCollectionFromArray( listToArray(arguments.collection) ) />
 	</cffunction>
 
 
@@ -310,7 +326,11 @@ DOCUMENT INFORMATION:
 			if ( isSimpleValue(arguments.collection) ) {
 				variables.instance.collection = getCollectionFromList(arguments.collection);
 			} else if ( isArray(arguments.collection) ) {
-				variables.instance.collection = getCollectionFromArray(arguments.collection);
+				if ( arrayLen(arguments.collection) AND isStruct( arguments.collection[1] ) ) {
+					variables.instance.collection = getCollectionFromArrayOfStructs(arguments.collection);
+				} else {
+					variables.instance.collection = getCollectionFromArray(arguments.collection);
+				}
 			} else {
 				variables.instance.collection = getCollectionFromQuery(arguments.collection);
 			}
