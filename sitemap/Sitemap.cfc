@@ -156,24 +156,23 @@ DOCUMENT INFORMATION:
 			if ( structKeyExists(theUrl, 'lastmod')
 					AND ( NOT isSimpleValue(theUrl.lastmod) OR ( isSimpleValue(theUrl.lastmod) AND theUrl.lastmod NEQ '' ) )
 			) {
-				if ( NOT isValid('date', theUrl.lastmod) ) {
-					throwError('lastmod must be a valid date/time string or object.');
+				if ( isValid('date', theUrl.lastmod) ) {
+					result.lastmod = formatAsW3CDateTime(theUrl.lastmod);
+				} else if ( isW3cDateTimeFormat(theUrl.lastmod) ) {
+					result.lastmod = theUrl.lastmod;
+				} else {
+					throwError('lastmod must be a valid CFML date/time string or object, or a properly formatted W3C datetime string.');
 				}
-				result.lastmod = formatAsW3CDateTime(theUrl.lastmod);
 			}
 
-			if ( structKeyExists(theUrl, 'changefreq')
-					AND ( NOT isSimpleValue(theUrl.changefreq) OR ( isSimpleValue(theUrl.changefreq) AND theUrl.changefreq NEQ '' ) )
-			) {
+			if ( structKeyExists(theUrl, 'changefreq') AND isSimpleValue(theUrl.changefreq) AND theUrl.changefreq NEQ '' ) {
 				if ( NOT listFindNoCase(variables.CHANGEFREQ_VALUES, theUrl.changefreq) ) {
 					throwError('changefreq must be one of: #variables.CHANGEFREQ_VALUES#.');
 				}
 				result.changefreq = lCase(theUrl.changefreq);
 			}
 
-			if ( structKeyExists(theUrl, 'priority')
-					AND ( NOT isSimpleValue(theUrl.priority) OR ( isSimpleValue(theUrl.priority) AND theUrl.priority NEQ '' ) )
-			) {
+			if ( structKeyExists(theUrl, 'priority') AND isSimpleValue(theUrl.priority) AND theUrl.priority NEQ '' ) {
 				if ( NOT isValid('range', theUrl.priority, 0, 1) ) {
 					throwError('priority valid values range from 0.0 to 1.0.');
 				}
@@ -316,6 +315,47 @@ DOCUMENT INFORMATION:
 
 			return keyMap;
 		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="getW3cDateTimeFormat" returntype="string" access="private" output="false" hint="Returns W3C datetime format (dateYear,dateYearMonth,dateComplete,dateTimeToMinutes,dateTimeToSeconds,dateTimeComplete); returns empty string if no valid format match (http://www.w3.org/TR/NOTE-datetime).">
+		<cfargument name="dateTimeString" type="string" required="true" />
+
+		<cfscript>
+			var dt = arguments.dateTimeString;
+			var format = '';
+			var reYear = '[1-9][0-9]{3}';
+			var reMonth = '(0[1-9])|(1[0-2])';
+			var reDay = '(0[1-9])|([1-2][0-9])|(3[0-1])';
+			var reHours = '([0-1][0-9])|(2[0-3])';
+			var reMinutes = '[0-5][0-9]';
+			var reSeconds = reMinutes;
+			var reDecimalFractionOfSecond = '[0-9]+';
+			var reTimeZoneDesignator = 'Z|([+-](#reHours#):(#reMinutes#))';
+
+			if ( reFind('^#reYear#$', dt) ) {
+				format = 'dateYear';
+			} else if ( reFind('^(#reYear#)-(#reMonth#)$', dt) ) {
+				format = 'dateYearMonth';
+			} else if ( reFind('^(#reYear#)-(#reMonth#)-(#reDay#)$', dt) AND isDate(dt) ) {
+				format = 'dateComplete';
+			} else if ( reFind('^(#reYear#)-(#reMonth#)-(#reDay#)T(#reHours#):(#reMinutes#)(#reTimeZoneDesignator#)$', dt) AND isDate( left(dt, 10) ) ) {
+				format = 'dateTimeToMinutes';
+			} else if ( reFind('^(#reYear#)-(#reMonth#)-(#reDay#)T(#reHours#):(#reMinutes#):(#reSeconds#)(#reTimeZoneDesignator#)$', dt) AND isDate( left(dt, 10) ) ) {
+				format = 'dateTimeToSeconds';
+			} else if ( reFind('^(#reYear#)-(#reMonth#)-(#reDay#)T(#reHours#):(#reMinutes#):(#reSeconds#)\.(#reDecimalFractionOfSecond#)(#reTimeZoneDesignator#)$', dt) AND isDate( left(dt, 10) ) ) {
+				format = 'dateTimeComplete';
+			}
+
+			return format;
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="isW3cDateTimeFormat" returntype="boolean" access="private" output="false" hint="Validates W3C datetime formats, which are a subset of valid ISO 8601 dates/times (as described at http://www.w3.org/TR/NOTE-datetime).">
+		<cfargument name="dateTimeString" type="string" required="true" />
+
+		<cfreturn len( getW3cDateTimeFormat(arguments.dateTimeString) ) />
 	</cffunction>
 
 
