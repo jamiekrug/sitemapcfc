@@ -20,8 +20,8 @@
 	<cffunction name="test_init_array" access="public">
 		<cfscript>
 			var sitemap = '';
-			var initCollection = getSampleInitArray( variables.DEFAULT_COLLECTION_SIZE );
-			var expectedCollection = getSampleExpectedCollection( variables.DEFAULT_COLLECTION_SIZE );
+			var initCollection = getSampleInitArray();
+			var expectedCollection = getSampleExpectedCollection();
 			var actualCollection = '';
 
 			sitemap = createSitemap().init( initCollection );
@@ -36,8 +36,8 @@
 	<cffunction name="test_init_list" access="public">
 		<cfscript>
 			var sitemap = '';
-			var initCollection = getSampleInitList( variables.DEFAULT_COLLECTION_SIZE );
-			var expectedCollection = getSampleExpectedCollection( variables.DEFAULT_COLLECTION_SIZE );
+			var initCollection = getSampleInitList();
+			var expectedCollection = getSampleExpectedCollection();
 			var actualCollection = '';
 
 			sitemap = createSitemap().init( initCollection );
@@ -52,7 +52,7 @@
 	<cffunction name="test_init_arrayOfStructs_basic" access="public">
 		<cfscript>
 			var sitemap = '';
-			var initCollection = getSampleInitArrayOfStructs( variables.DEFAULT_COLLECTION_SIZE );
+			var initCollection = getSampleInitArrayOfStructs();
 			var expectedCollection = duplicate( initCollection );
 			var actualCollection = createSitemap().init( initCollection ).getCollection();
 
@@ -64,7 +64,7 @@
 	<cffunction name="test_init_arrayOfStructs_all_keys_standard" access="public">
 		<cfscript>
 			var sitemap = '';
-			var initCollection = getSampleInitArrayOfStructs( variables.DEFAULT_COLLECTION_SIZE );
+			var initCollection = getSampleInitArrayOfStructs();
 			var expectedCollection = '';
 			var actualCollection = '';
 			var i = '';
@@ -87,8 +87,8 @@
 	<cffunction name="test_init_query_basic" access="public">
 		<cfscript>
 			var sitemap = '';
-			var initCollection = getSampleInitQueryBasic( variables.DEFAULT_COLLECTION_SIZE );
-			var expectedCollection = getSampleExpectedCollection( variables.DEFAULT_COLLECTION_SIZE );
+			var initCollection = getSampleInitQueryBasic();
+			var expectedCollection = getSampleExpectedCollection();
 			var actualCollection = '';
 
 			sitemap = createSitemap().init( initCollection );
@@ -103,8 +103,8 @@
 	<cffunction name="test_init_query_all_keys_standard" access="public">
 		<cfscript>
 			var sitemap = '';
-			var initCollection = getSampleInitQueryAllStandardKeys( variables.DEFAULT_COLLECTION_SIZE );
-			var expectedCollection = getSampleExpectedCollection( variables.DEFAULT_COLLECTION_SIZE );
+			var initCollection = getSampleInitQueryAllStandardKeys();
+			var expectedCollection = getSampleExpectedCollection();
 			var actualCollection = '';
 
 			for ( i=1; i LTE arrayLen(expectedCollection); i=i+1 ) {
@@ -128,8 +128,16 @@
 	<cffunction name="test_getXml" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+			var actual = '';
+			var expected = '';
 
-			fail('test_getXml not yet implemented!');
+			expected = xmlParse( getSampleXmlDoc() );
+			actual = sitemap.init( getSampleInitQueryBasic() ).getXml();
+			assertEquals(expected, actual);
+
+			expected = xmlParse( getSampleXmlDoc( isIncludeAllStandardKeys = true ) );
+			actual = sitemap.init( getSampleInitQueryAllStandardKeys() ).getXml();
+			assertEquals(expected, actual);
 		</cfscript>
 	</cffunction>
 
@@ -137,8 +145,16 @@
 	<cffunction name="test_getXmlString" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+			var actual = '';
+			var expected = '';
 
-			fail('test_getXmlString not yet implemented!');
+			expected = getSampleXmlDoc();
+			actual = sitemap.init( getSampleInitQueryBasic() ).getXmlString();
+			assertEquals(expected, actual);
+
+			expected = getSampleXmlDoc( isIncludeAllStandardKeys = true );
+			actual = sitemap.init( getSampleInitQueryAllStandardKeys() ).getXmlString();
+			assertEquals(expected, actual);
 		</cfscript>
 	</cffunction>
 
@@ -146,8 +162,31 @@
 	<cffunction name="test_toFile" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+			var actual = '';
+			var expected = '';
+			var file = getTempDirectory() & 'SitemapTest_test_toFile' & replace(createUUID(), '-', '', 'all') & '.tmp';
 
-			fail('test_toFile not yet implemented!');
+			expected = getSampleXmlDoc();
+
+			sitemap.init( getSampleInitQueryBasic() ).toFile( file );
+		</cfscript>
+
+		<cffile action="read" file="#file#" variable="actual" charset="utf-8" />
+		<cffile action="delete" file="#file#" />
+
+		<cfscript>
+			assertEquals(expected, actual);
+
+			expected = getSampleXmlDoc( isIncludeAllStandardKeys = true );
+
+			sitemap.init( getSampleInitQueryAllStandardKeys() ).toFile( file );
+		</cfscript>
+
+		<cffile action="read" file="#file#" variable="actual" charset="utf-8" />
+		<cffile action="delete" file="#file#" />
+
+		<cfscript>
+			assertEquals(expected, actual);
 		</cfscript>
 	</cffunction>
 
@@ -337,7 +376,7 @@
 
 
 	<cffunction name="getSampleExpectedCollection" returntype="array" access="private" output="false">
-		<cfargument name="count" type="numeric" required="true" hint="Number of URLs in collection (whole number, 1 or greater)." />
+		<cfargument name="count" type="numeric" required="false" default="#variables.DEFAULT_COLLECTION_SIZE#" hint="Number of URLs in collection (whole number, 1 or greater)." />
 
 		<cfscript>
 			var result = arrayNew(1);
@@ -345,7 +384,7 @@
 
 			for (i=1; i LTE arguments.count; i=i+1) {
 				result[i] = structNew();
-				result[i].loc = replace(variables.URL_TEMPLATE, '${count}', i);
+				result[i].loc = getSampleLoc(i);
 			}
 
 			return result;
@@ -354,14 +393,14 @@
 
 
 	<cffunction name="getSampleInitArray" returntype="array" access="private" output="false">
-		<cfargument name="count" type="numeric" required="true" hint="Number of URLs to return (whole number, 1 or greater)." />
+		<cfargument name="count" type="numeric" required="false" default="#variables.DEFAULT_COLLECTION_SIZE#" hint="Number of URLs to return (whole number, 1 or greater)." />
 
 		<cfscript>
 			var result = arrayNew(1);
 			var i = '';
 
 			for (i=1; i LTE arguments.count; i=i+1) {
-				result[i] = replace(variables.URL_TEMPLATE, '${count}', i);
+				result[i] = getSampleLoc(i);
 			}
 
 			return result;
@@ -370,21 +409,21 @@
 
 
 	<cffunction name="getSampleInitArrayOfStructs" returntype="array" access="private" output="false">
-		<cfargument name="count" type="numeric" required="true" hint="Number of URLs to return (whole number, 1 or greater)." />
+		<cfargument name="count" type="numeric" required="false" default="#variables.DEFAULT_COLLECTION_SIZE#" hint="Number of URLs to return (whole number, 1 or greater)." />
 
 		<cfreturn getSampleExpectedCollection( arguments.count ) />
 	</cffunction>
 
 
 	<cffunction name="getSampleInitList" returntype="string" access="private" output="false">
-		<cfargument name="count" type="numeric" required="true" hint="Number of URLs to return (whole number, 1 or greater)." />
+		<cfargument name="count" type="numeric" required="false" default="#variables.DEFAULT_COLLECTION_SIZE#" hint="Number of URLs to return (whole number, 1 or greater)." />
 
 		<cfreturn arrayToList( getSampleInitArray( arguments.count ) ) />
 	</cffunction>
 
 
 	<cffunction name="getSampleInitQueryAllStandardKeys" returntype="query" access="private" output="false">
-		<cfargument name="count" type="numeric" required="true" hint="Number of URLs in collection (whole number, 1 or greater)." />
+		<cfargument name="count" type="numeric" required="false" default="#variables.DEFAULT_COLLECTION_SIZE#" hint="Number of URLs in collection (whole number, 1 or greater)." />
 
 		<cfscript>
 			var result = queryNew('loc,lastmod,changefreq,priority');
@@ -405,7 +444,7 @@
 
 
 	<cffunction name="getSampleInitQueryBasic" returntype="query" access="private" output="false">
-		<cfargument name="count" type="numeric" required="true" hint="Number of URLs in collection (whole number, 1 or greater)." />
+		<cfargument name="count" type="numeric" required="false" default="#variables.DEFAULT_COLLECTION_SIZE#" hint="Number of URLs in collection (whole number, 1 or greater)." />
 
 		<cfscript>
 			var result = queryNew('loc');
@@ -419,6 +458,50 @@
 
 			return result;
 		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="getSampleLoc" returntype="string" access="private" output="false">
+		<cfargument name="token" type="string" required="true" />
+
+		<cfreturn replace(variables.URL_TEMPLATE, '${count}', arguments.token) />
+	</cffunction>
+
+
+	<cffunction name="getSampleXmlDoc" returntype="string" access="private" output="false">
+		<cfargument name="count" type="numeric" required="false" default="#variables.DEFAULT_COLLECTION_SIZE#" hint="Number of URLs in collection (whole number, 1 or greater)." />
+		<cfargument name="isIncludeAllStandardKeys" type="boolean" required="false" default="false" />
+
+		<cfscript>
+			var result = getXmlDocOpen();
+			var i = '';
+
+			for (i=1; i LTE arguments.count; i=i+1) {
+				result = result & '<url><loc>' & getSampleLoc(i) & '</loc>';
+
+				if ( arguments.isIncludeAllStandardKeys ) {
+					result = result & '<lastmod>' & variables.DEFAULT_LASTMOD & '</lastmod>';
+					result = result & '<changefreq>' & variables.DEFAULT_CHANGEFREQ & '</changefreq>';
+					result = result & '<priority>' & variables.DEFAULT_PRIORITY & '</priority>';
+				}
+
+				result = result & '</url>';
+			}
+
+			result = result & getXmlDocClose();
+
+			return result;
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="getXmlDocClose" returntype="string" access="private" output="false">
+		<cfreturn '</urlset>' />
+	</cffunction>
+
+
+	<cffunction name="getXmlDocOpen" returntype="string" access="private" output="false">
+		<cfreturn '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9" url="http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' />
 	</cffunction>
 
 
