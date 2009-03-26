@@ -86,7 +86,7 @@ DOCUMENT INFORMATION:
 	<cffunction name="toFile" returntype="any" access="public" output="false" hint="Writes sitemap XML document to disk.">
 		<cfargument name="filePath" type="string" required="true" hint="Absolute path to sitemap XML file to be written to disk." />
 
-		<cffile action="write" file="#arguments.filePath#" output="#getXmlString()#" addnewline="false" charset="utf-8" mode="644" />
+		<cffile action="write" file="#arguments.filePath#" output="#getXmlString()#" addnewline="false" charset="utf-8" mode="664" />
 
 		<cfreturn this />
 	</cffunction>
