@@ -105,20 +105,20 @@ DOCUMENT INFORMATION:
 		<cfargument name="loc" type="string" required="true" hint="URL of the page." />
 		<cfargument name="lastmod" type="string" required="false" hint="The date of last modification of the file, in W3C Datetime format (http://www.w3.org/TR/NOTE-datetime)." />
 		<cfargument name="changefreq" type="string" required="false" hint="Valid values are #variables.CHANGEFREQ_VALUES# (see &lt;changefreq&gt; XML tag definition at http://sitemaps.org/protocol.php for details)." />
-		<cfargument name="priority" type="numeric" required="false" hint="Valid values range from 0.0 to 1.0 (see &lt;priority&gt; XML tag definition at http://sitemaps.org/protocol.php for details)." />
+		<cfargument name="priority" type="string" required="false" hint="Valid values range from 0.0 to 1.0 (see &lt;priority&gt; XML tag definition at http://sitemaps.org/protocol.php for details)." />
 
 		<cfscript>
 			var result = '<url>';
 
 			result = result & '<loc>' & xmlFormat(arguments.loc) & '</loc>';
 
-			if ( structKeyExists(arguments, 'lastmod') ) {
+			if ( structKeyExists(arguments, 'lastmod') AND len(arguments.lastmod) ) {
 				result = result & '<lastmod>' & arguments.lastmod & '</lastmod>';
 			}
-			if ( structKeyExists(arguments, 'changefreq') ) {
+			if ( structKeyExists(arguments, 'changefreq') AND len(arguments.changefreq) ) {
 				result = result & '<changefreq>' & arguments.changefreq & '</changefreq>';
 			}
-			if ( structKeyExists(arguments, 'priority') ) {
+			if ( structKeyExists(arguments, 'priority') AND len(arguments.priority) ) {
 				result = result & '<priority>' & arguments.priority & '</priority>';
 			}
 

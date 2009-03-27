@@ -197,8 +197,36 @@
 	<cffunction name="test_buildSitemapUrl" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+			var args = structNew();
+			var expectedChildTags = '';
+			var expected = '';
+			var actual = '';
 
-			fail('test_buildSitemapUrl not yet implemented!');
+			makePublic(sitemap, 'buildSitemapUrl');
+
+			args['loc'] = getSampleLoc('1');
+			expectedChildTags = '<loc>#args['loc']#</loc>';
+			expected = '<url>#expectedChildTags#</url>';
+			actual = sitemap.buildSitemapUrl( argumentCollection=args );
+			assertEquals(expected, actual);
+
+			args['lastmod'] = variables.DEFAULT_LASTMOD;
+			expectedChildTags = expectedChildTags & '<lastmod>#args['lastmod']#</lastmod>';
+			expected = '<url>#expectedChildTags#</url>';
+			actual = sitemap.buildSitemapUrl( argumentCollection=args );
+			assertEquals(expected, actual);
+
+			args['changefreq'] = variables.DEFAULT_CHANGEFREQ;
+			expectedChildTags = expectedChildTags & '<changefreq>#args['changefreq']#</changefreq>';
+			expected = '<url>#expectedChildTags#</url>';
+			actual = sitemap.buildSitemapUrl( argumentCollection=args );
+			assertEquals(expected, actual);
+
+			args['priority'] = variables.DEFAULT_PRIORITY;
+			expectedChildTags = expectedChildTags & '<priority>#args['priority']#</priority>';
+			expected = '<url>#expectedChildTags#</url>';
+			actual = sitemap.buildSitemapUrl( argumentCollection=args );
+			assertEquals(expected, actual);
 		</cfscript>
 	</cffunction>
 
@@ -206,6 +234,8 @@
 	<cffunction name="test_cleanUrl" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+
+			makePublic(sitemap, 'cleanUrl');
 
 			fail('test_cleanUrl not yet implemented!');
 		</cfscript>
@@ -215,6 +245,8 @@
 	<cffunction name="test_formatAsW3CDateTime" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+
+			makePublic(sitemap, 'formatAsW3CDateTime');
 
 			fail('test_formatAsW3CDateTime not yet implemented!');
 		</cfscript>
