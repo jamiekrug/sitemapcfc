@@ -235,6 +235,8 @@ DOCUMENT INFORMATION:
 
 			// loop over collection to set relevant data into instance collection
 			for (i=1; i LTE arrayLen(arguments.collection); i=i+1) {
+				structClear(thisUrl);
+
 				urlSource = arguments.collection[i];
 
 				// loop over valid sitemap url keys and set those available for collection item:
@@ -285,6 +287,8 @@ DOCUMENT INFORMATION:
 
 			// loop over collection to set relevant data into instance collection
 			for (i=1; i LTE arguments.collection.recordCount; i=i+1) {
+				structClear(thisUrl);
+
 				// loop over valid sitemap url keys and set collection item:
 				for (key IN keyMap) {
 					column = keyMap[key];

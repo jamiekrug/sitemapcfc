@@ -231,7 +231,7 @@
 	</cffunction>
 
 
-	<cffunction name="test_cleanUrl" returntype="void" access="public" output="false">
+	<!--- TODO: <cffunction name="test_cleanUrl" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
 
@@ -239,16 +239,106 @@
 
 			fail('test_cleanUrl not yet implemented!');
 		</cfscript>
-	</cffunction>
+	</cffunction> --->
 
 
-	<cffunction name="test_formatAsW3CDateTime" returntype="void" access="public" output="false">
+	<!--- TODO: <cffunction name="test_formatAsW3CDateTime" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
 
 			makePublic(sitemap, 'formatAsW3CDateTime');
 
 			fail('test_formatAsW3CDateTime not yet implemented!');
+		</cfscript>
+	</cffunction> --->
+
+
+	<cffunction name="test_getCollectionFromArray" returntype="void" access="public" output="false">
+		<cfscript>
+			var sitemap = createSitemap();
+			var arrayCollection = arrayNew(1);
+			var expected = arrayNew(1);
+			var actual = '';
+			var tempStruct = structNew();
+
+			makePublic(sitemap, 'getCollectionFromArray');
+
+			arrayCollection[1] = 'http://host/page1';
+			arrayCollection[2] = 'http://host/page2';
+
+			actual = sitemap.getCollectionFromArray(arrayCollection);
+
+			tempStruct['loc'] = 'http://host/page1';
+			expected[1] = duplicate(tempStruct);
+			tempStruct['loc'] = 'http://host/page2';
+			expected[2] = duplicate(tempStruct);
+
+			assertEquals(expected, actual);
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="test_getCollectionFromArrayOfStructs" returntype="void" access="public" output="false">
+		<cfscript>
+			var sitemap = createSitemap();
+			var arrayOfStructsCollection = arrayNew(1);
+			var expected = arrayNew(1);
+			var actual = '';
+			var tempStruct = '';
+
+			makePublic(sitemap, 'getCollectionFromArrayOfStructs');
+
+			tempStruct = structNew();
+			tempStruct['loc'] = 'http://host/page1';
+			tempStruct['changefreq'] = 'daily';
+			arrayOfStructsCollection[1] = duplicate(tempStruct);
+			tempStruct = structNew();
+			tempStruct['loc'] = 'http://host/page2';
+			arrayOfStructsCollection[2] = duplicate(tempStruct);
+
+			actual = sitemap.getCollectionFromArrayOfStructs(arrayOfStructsCollection);
+
+			tempStruct = structNew();
+			tempStruct['loc'] = 'http://host/page1';
+			tempStruct['changefreq'] = 'daily';
+			expected[1] = duplicate(tempStruct);
+			tempStruct = structNew();
+			tempStruct['loc'] = 'http://host/page2';
+			expected[2] = duplicate(tempStruct);
+
+			assertEquals(expected, actual);
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="test_getCollectionFromQuery" returntype="void" access="public" output="false">
+		<cfscript>
+			var sitemap = createSitemap();
+			var queryCollection = queryNew('loc,changefreq');
+			var expected = arrayNew(1);
+			var actual = '';
+			var tempStruct = '';
+
+			makePublic(sitemap, 'getCollectionFromQuery');
+
+			queryAddRow(queryCollection);
+			querySetCell(queryCollection, 'loc', 'http://host/page1');
+			querySetCell(queryCollection, 'changefreq', 'daily');
+			queryAddRow(queryCollection);
+			querySetCell(queryCollection, 'loc', 'http://host/page2');
+			querySetCell(queryCollection, 'changefreq', '');
+
+			actual = sitemap.getCollectionFromQuery(queryCollection);
+
+			tempStruct = structNew();
+			tempStruct['loc'] = 'http://host/page1';
+			tempStruct['changefreq'] = 'daily';
+			expected[1] = duplicate(tempStruct);
+			tempStruct = structNew();
+			tempStruct['loc'] = 'http://host/page2';
+			expected[2] = duplicate(tempStruct);
+
+			assertEquals(expected, actual);
 		</cfscript>
 	</cffunction>
 
@@ -389,7 +479,7 @@
 
 
 	<cffunction name="createSitemap" returntype="sitemap.Sitemap" access="private" output="false">
-		<cfreturn createObject('component', 'sitemap.Sitemap') />
+		<cfreturn createObject('component', 'sitemap.Sitemap').init('') />
 	</cffunction>
 
 
