@@ -40,9 +40,10 @@ DOCUMENT INFORMATION:
 		variables.CHANGEFREQ_VALUES = 'always,hourly,daily,weekly,monthly,yearly,never';
 	</cfscript>
 
+
 	<cffunction name="init" access="public" output="false" hint="Constructor; initializes sitemap object with a collection of URLs.">
 		<cfargument name="collection" type="any" required="true" hint="The url collection to be represented in a sitemap; acceptable types are a list, a query, an array or an array of structs. Query or array of structs collection types must have a 'loc' key/column or a mapping in the collectionKeyMap argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML element). Other child tags of the &lt;url&gt; element, as described at http://sitemaps.org/protocol.php, are also valid key/column names (and can also be mapped to respective key/column names, again using the collectionKeyMap argument). 'lastmod' values may be any valid date/time string or object, as they will automatically be converted to proper W3C datetime format when initialized into collection property." />
-		<cfargument name="collectionKeyMap" type="struct" required="false" default="#structNew()#" hint="The mapping of standard sitemaps.org protocol 'url' child element names (#variables.URL_CHILD_KEYS#) to respective keys/columns in collection argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML tag)." />
+		<cfargument name="collectionKeyMap" type="struct" required="false" default="#structNew()#" hint="The mapping of standard sitemaps.org protocol 'url' child element names (variables.URL_CHILD_KEYS) to respective keys/columns in collection argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML tag)." />
 
 		<cfscript>
 			setCollectionKeyMap(arguments.collectionKeyMap);
@@ -104,7 +105,7 @@ DOCUMENT INFORMATION:
 	<cffunction name="buildSitemapUrl" returntype="string" access="private" output="false" hint="Returns raw XML string for a &lt;url&gt; element, including &lt;loc&gt; child tag and any other optional child tag arguments passed.">
 		<cfargument name="loc" type="string" required="true" hint="URL of the page." />
 		<cfargument name="lastmod" type="string" required="false" hint="The date of last modification of the file, in W3C Datetime format (http://www.w3.org/TR/NOTE-datetime)." />
-		<cfargument name="changefreq" type="string" required="false" hint="Valid values are #variables.CHANGEFREQ_VALUES# (see &lt;changefreq&gt; XML tag definition at http://sitemaps.org/protocol.php for details)." />
+		<cfargument name="changefreq" type="string" required="false" hint="Valid values are variables.CHANGEFREQ_VALUES (see &lt;changefreq&gt; XML tag definition at http://sitemaps.org/protocol.php for details)." />
 		<cfargument name="priority" type="string" required="false" hint="Valid values range from 0.0 to 1.0 (see &lt;priority&gt; XML tag definition at http://sitemaps.org/protocol.php for details)." />
 
 		<cfscript>
@@ -176,7 +177,7 @@ DOCUMENT INFORMATION:
 				if ( NOT isValid('range', theUrl.priority, 0, 1) ) {
 					throwError('priority valid values range from 0.0 to 1.0.');
 				}
-				result.priority = numberFormat(theUrl.priority, '9.9');
+				result.priority = numberFormat(theUrl.priority, '0.9');
 			}
 
 			return result;
