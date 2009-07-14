@@ -185,12 +185,28 @@ DOCUMENT INFORMATION:
 	</cffunction>
 
 
-	<cffunction name="formatAsW3CDateTime" returntype="string" access="private" output="false" hint="Formats a date/time argument to UTC in a format complete with date, hours, minuts and seconds conforming to the W3C standard (http://www.w3.org/TR/NOTE-datetime).">
+	<cffunction name="formatAsW3CDateTime" returntype="string" access="private" output="false" hint="Formats a date/time argument according to the W3C Datetime standard (http://www.w3.org/TR/NOTE-datetime).">
 		<cfargument name="dateTime" type="date" required="true" />
 
 		<cfscript>
-			var utc = dateConvert('local2Utc', arguments.dateTime);
-			var result = dateFormat(utc, 'yyyy-mm-dd') & 'T' & timeFormat(utc, 'HH:mm:ss') & 'Z';
+			var localDateTime = arguments.dateTime;
+			var formattedDate = dateFormat(arguments.dateTime, 'yyyy-mm-dd');
+			var formattedTime = timeFormat(arguments.dateTime, 'HH:mm:ss');
+			var result = formattedDate;
+
+			// append time, if non-zero time
+			if ( formattedTime NEQ '00:00:00' ) {
+				// append hours:minutes
+				result = result & 'T' & left( formattedTime, 5 );
+
+				// append seconds, if non-zero
+				if ( right( formattedTime, 2 ) NEQ '00' ) {
+					result = result & right( formattedTime, 3 );
+				}
+
+				// append time zone designator
+				result = result & timeZoneDesignator( arguments.dateTime );
+			}
 
 			return result;
 		</cfscript>
@@ -410,6 +426,20 @@ DOCUMENT INFORMATION:
 		<cfargument name="message" type="string" required="true" />
 
 		<cfthrow type="#getMetaData(this).name#" message="#arguments.message#" />
+	</cffunction>
+
+
+	<cffunction name="timeZoneDesignator" returntype="string" access="private" output="false">
+		<cfscript>
+			var offsetOperator = '+';
+			var timeZoneInfo = getTimeZoneInfo();
+
+			if ( timeZoneInfo.utcTotalOffset EQ 0 ) return 'Z';
+
+			if ( timeZoneInfo.utcTotalOffset GT 0 ) offsetOperator = '-';
+
+			return offsetOperator & right( '0#timeZoneInfo.utcHourOffset#', 2 ) & ':' & right( '0#timeZoneInfo.utcMinuteOffset#', 2 );
+		</cfscript>
 	</cffunction>
 
 

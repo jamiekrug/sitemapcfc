@@ -231,26 +231,62 @@
 	</cffunction>
 
 
-	<!--- TODO: <cffunction name="test_cleanUrl" returntype="void" access="public" output="false">
+	<cffunction name="test_cleanUrl" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+			var arg = '';
+			var expected = '';
 
-			makePublic(sitemap, 'cleanUrl');
+			makePublic( sitemap, 'cleanUrl' );
 
-			fail('test_cleanUrl not yet implemented!');
+			arg = structNew();
+			expected = structNew();
+			arg['loc'] = '	http://host/page1 ';
+			expected['loc'] = 'http://host/page1';
+			arg['lastmod'] = '7/11/2009 1:00 PM';
+			expected['lastmod'] = '2009-07-11T13:00#alternateTimeZoneDesignator()#';
+			arg['changefreq'] = '  monthly
+									';
+			expected['changefreq'] = 'monthly';
+			arg['priority'] = ' 0.1234	';
+			expected['priority'] = '0.1';
+
+			actual = sitemap.cleanUrl( arg );
+
+			assertEquals( expected, actual );
 		</cfscript>
-	</cffunction> --->
+	</cffunction>
 
 
-	<!--- TODO: <cffunction name="test_formatAsW3CDateTime" returntype="void" access="public" output="false">
+	<cffunction name="test_formatAsW3CDateTime" returntype="void" access="public" output="false">
 		<cfscript>
 			var sitemap = createSitemap();
+			var actual = '';
+			var expected = '';
 
 			makePublic(sitemap, 'formatAsW3CDateTime');
 
-			fail('test_formatAsW3CDateTime not yet implemented!');
+			actual = sitemap.formatAsW3CDateTime( '7/14/09' );
+			expected = '2009-07-14';
+			assertEquals( expected, actual );
+
+			actual = sitemap.formatAsW3CDateTime( '7/2009' );
+			expected = '2009-07-01';
+			assertEquals( expected, actual );
+
+			actual = sitemap.formatAsW3CDateTime( '7/14/09 5:00 PM' );
+			expected = '2009-07-14T17:00#alternateTimeZoneDesignator()#';
+			assertEquals( expected, actual );
+
+			actual = sitemap.formatAsW3CDateTime( "{ts '2009-07-14 16:09:11'}" );
+			expected = '2009-07-14T16:09:11#alternateTimeZoneDesignator()#';
+			assertEquals( expected, actual );
+
+			actual = sitemap.formatAsW3CDateTime( '2009-07-14 16:09:11.5' );
+			expected = '2009-07-14T16:09:11#alternateTimeZoneDesignator()#';
+			assertEquals( expected, actual );
 		</cfscript>
-	</cffunction> --->
+	</cffunction>
 
 
 	<cffunction name="test_getCollectionFromArray" returntype="void" access="public" output="false">
@@ -476,6 +512,25 @@
 
 
 	<!--- PRIVATE METHODS: --->
+
+
+	<cffunction name="alternateTimeZoneDesignator" returntype="string" access="private" output="false">
+		<cfscript>
+			var localDateTime = now();
+			var utcDateTime = dateConvert( 'local2Utc', localDateTime );
+			var diffTotalMinutes = dateDiff( 'n', utcDateTime, localDateTime );
+			var absTotalMinutes = abs( diffTotalMinutes );
+			var offsetHour = int( absTotalMinutes/60 );
+			var offsetMinute = absTotalMinutes MOD 60;
+			var offsetPrefix = '+';
+
+			if ( diffTotalMinutes EQ 0 ) return 'Z';
+
+			if ( diffTotalMinutes LT 0 ) offsetPrefix = '-';
+
+			return offsetPrefix & right( '0#offsetHour#', 2 ) & ':' & right( '0#offsetMinute#', 2 );
+		</cfscript>
+	</cffunction>
 
 
 	<cffunction name="createSitemap" returntype="sitemap.Sitemap" access="private" output="false">
