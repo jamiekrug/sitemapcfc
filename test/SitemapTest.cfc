@@ -491,6 +491,7 @@
 			var keyMapActual = '';
 
 			makePublic(sitemap, 'setCollectionKeyMap');
+			makePublic(sitemap, 'getCollectionKeyMap');
 
 			sitemap.setCollectionKeyMap(keyMapArg);
 			keyMapActual = sitemap.getCollectionKeyMap();

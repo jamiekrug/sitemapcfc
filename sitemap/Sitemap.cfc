@@ -417,7 +417,7 @@ DOCUMENT INFORMATION:
 			variables.instance.collectionKeyMap = result;
 		</cfscript>
 	</cffunction>
-	<cffunction name="getCollectionKeyMap" returntype="struct" access="public" output="false" hint="Property: collectionKeyMap">
+	<cffunction name="getCollectionKeyMap" returntype="struct" access="private" output="false" hint="Property: collectionKeyMap">
 		<cfreturn variables.instance.collectionKeyMap />
 	</cffunction>
 
