@@ -122,6 +122,21 @@
 	</cffunction>
 
 
+	<cffunction name="test_init_locPrefix_locSuffix" access="public">
+		<cfscript>
+			var sitemap = createSitemap();
+			var expected = arrayNew(1);
+			var actual = '';
+
+			expected[1] = structNew();
+			expected[1].loc = 'http://host/page1.html';
+			actual = sitemap.init( collection = 'page1', locPrefix = 'http://host/', locSuffix = '.html' ).getCollection();
+
+			assertEquals(expected, actual);
+		</cfscript>
+	</cffunction>
+
+
 	<!--- TEST PUBLIC METHODS: --->
 
 

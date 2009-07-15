@@ -43,16 +43,21 @@ DOCUMENT INFORMATION:
 
 	<cffunction name="init" access="public" output="false" hint="Constructor; initializes sitemap object with a collection of URLs.">
 		<cfargument name="collection" type="any" required="true" hint="The url collection to be represented in a sitemap; acceptable types are a list, a query, an array or an array of structs. Query or array of structs collection types must have a 'loc' key/column or a mapping in the collectionKeyMap argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML element). Other child tags of the &lt;url&gt; element, as described at http://sitemaps.org/protocol.php, are also valid key/column names (and can also be mapped to respective key/column names, again using the collectionKeyMap argument). 'lastmod' values may be any valid date/time string or object, as they will automatically be converted to proper W3C datetime format when initialized into collection property." />
-		<cfargument name="collectionKeyMap" type="struct" required="false" default="#structNew()#" hint="The mapping of standard sitemaps.org protocol 'url' child element names (variables.URL_CHILD_KEYS) to respective keys/columns in collection argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML tag)." />
+		<cfargument name="collectionKeyMap" type="struct" default="#structNew()#" hint="The mapping of standard sitemaps.org protocol 'url' child element names (variables.URL_CHILD_KEYS) to respective keys/columns in collection argument (e.g., collectionKeyMap.loc='pageURL' when collection argument is a query with a 'pageURL' column representative of the 'loc' sitemap XML tag)." />
+		<cfargument name="defaults" type="struct" default="#structNew()#" hint="Specify a default value for one or more optional URL property (lastmod,changefreq,priority)." />
+		<cfargument name="locPrefix" type="string" default="" hint="String to prefix loc value for each URL in collection." />
+		<cfargument name="locSuffix" type="string" default="" hint="String to append to end of loc value for each URL in collection." />
 
 		<cfscript>
-			setCollectionKeyMap(arguments.collectionKeyMap);
-			setCollection(arguments.collection);
+			setCollectionKeyMap( arguments.collectionKeyMap );
+			setDefaults( arguments.defaults );
+			setLocPrefix( arguments.locPrefix );
+			setLocSuffix( arguments.locSuffix );
+			setCollection( arguments.collection );
 
 			return this;
 		</cfscript>
 	</cffunction>
-
 
 	<!--- PUBLIC METHODS --->
 
@@ -148,11 +153,12 @@ DOCUMENT INFORMATION:
 			if ( NOT structKeyExists(theUrl, 'loc') ) {
 				throwError('loc key is required for each collection item.');
 			}
-			if ( NOT isValid('URL', theUrl.loc) ) {
+
+			result.loc = getLocPrefix() & theUrl.loc & getLocSuffix();
+
+			if ( NOT isValid('URL', result.loc) ) {
 				throwError('loc must be a valid URL.');
 			}
-
-			result.loc = theUrl.loc;
 
 			if ( structKeyExists(theUrl, 'lastmod')
 					AND ( NOT isSimpleValue(theUrl.lastmod) OR ( isSimpleValue(theUrl.lastmod) AND theUrl.lastmod NEQ '' ) )
@@ -336,6 +342,40 @@ DOCUMENT INFORMATION:
 
 			return keyMap;
 		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="getDefaults" returntype="struct" access="private" output="false">
+		<cfreturn variables.instance.defaults />
+	</cffunction>
+	<cffunction name="setDefaults" returntype="void" access="private" output="false">
+		<cfargument name="defaults" type="struct" required="true" />
+		<cfscript>
+			variables.instance.defaults.lastmod = '';
+			variables.instance.defaults.changefreq = '';
+			variables.instance.defaults.priority = '';
+			if ( structKeyExists( arguments.defaults, 'lastmod') ) variables.instance.defaults.lastmod = arguments.defaults.lastmod;
+			if ( structKeyExists( arguments.defaults, 'changefreq') ) variables.instance.defaults.changefreq = arguments.defaults.changefreq;
+			if ( structKeyExists( arguments.defaults, 'priority') ) variables.instance.defaults.priority = arguments.defaults.priority;
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="getLocPrefix" returntype="string" access="private" output="false">
+		<cfreturn variables.instance.locPrefix />
+	</cffunction>
+	<cffunction name="setLocPrefix" returntype="void" access="private" output="false">
+		<cfargument name="locPrefix" type="string" required="true" />
+		<cfset variables.instance.locPrefix = arguments.locPrefix />
+	</cffunction>
+
+
+	<cffunction name="getLocSuffix" returntype="string" access="private" output="false">
+		<cfreturn variables.instance.locSuffix />
+	</cffunction>
+	<cffunction name="setLocSuffix" returntype="void" access="private" output="false">
+		<cfargument name="locSuffix" type="string" required="true" />
+		<cfset variables.instance.locSuffix = arguments.locSuffix />
 	</cffunction>
 
 
