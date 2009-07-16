@@ -59,6 +59,7 @@ DOCUMENT INFORMATION:
 		</cfscript>
 	</cffunction>
 
+
 	<!--- PUBLIC METHODS --->
 
 
@@ -135,56 +136,116 @@ DOCUMENT INFORMATION:
 	</cffunction>
 
 
+	<cffunction name="cleanChangeFreq" returntype="string" access="private" output="false">
+		<cfargument name="changefreq" type="any" required="true" />
+
+		<cfscript>
+			var result = '';
+
+			if ( isSimpleValue( arguments.changefreq ) ) arguments.changefreq = trim( arguments.changefreq );
+
+			if ( len( arguments.changefreq ) ) {
+				if ( NOT listFindNoCase( variables.CHANGEFREQ_VALUES, arguments.changefreq ) ) {
+					throwError( 'changefreq must be one of: #variables.CHANGEFREQ_VALUES#.' );
+				}
+				result = lCase( arguments.changefreq );
+			}
+
+			return result;
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="cleanLastMod" returntype="string" access="private" output="false">
+		<cfargument name="lastmod" type="any" required="true" />
+
+		<cfscript>
+			var result = '';
+
+			if ( isSimpleValue( arguments.lastmod ) ) arguments.lastmod = trim( arguments.lastmod );
+
+			if ( isValid( 'date', arguments.lastmod ) ) {
+				result = formatAsW3CDateTime( arguments.lastmod );
+			} else if ( isW3cDateTimeFormat( arguments.lastmod ) ) {
+				result = arguments.lastmod;
+			}
+
+			return result;
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="cleanLoc" returntype="string" access="private" output="false">
+		<cfargument name="loc" type="any" required="true" />
+
+		<cfscript>
+			var result = '';
+
+			if ( isSimpleValue( arguments.loc ) ) {
+				result = getLocPrefix() & trim( arguments.loc ) & getLocSuffix();
+			}
+
+			if ( NOT isValid('URL', result) ) {
+				throwError('loc must be a valid URL.');
+			}
+
+			return result;
+		</cfscript>
+	</cffunction>
+
+
+	<cffunction name="cleanPriority" returntype="string" access="private" output="false">
+		<cfargument name="priority" type="any" required="true" />
+
+		<cfscript>
+			var result = '';
+
+			if ( isSimpleValue( arguments.priority ) ) arguments.priority = trim( arguments.priority );
+
+			if ( len( arguments.priority ) ) {
+				if ( NOT isValid( 'range', arguments.priority, 0, 1 ) ) {
+					throwError( 'priority valid values range from 0.0 to 1.0.' );
+				}
+				result = numberFormat( arguments.priority, '0.9' );
+			}
+
+			return result;
+		</cfscript>
+	</cffunction>
+
+
 	<cffunction name="cleanUrl" returntype="struct" access="private" output="false" hint="Validate and properly format each url item child.">
 		<cfargument name="source" type="struct" required="true" />
 
 		<cfscript>
 			var result = structNew();
-			var theUrl = arguments.source;
-			var key = '';
+			var loc = '';
+			var lastmod = '';
+			var changefreq = '';
+			var priority = '';
 
-			// trim all simple values:
-			for (key IN theUrl) {
-				if ( isSimpleValue( theUrl[key] ) ) {
-					theUrl[key] = trim( theUrl[key] );
-				}
-			}
-
-			if ( NOT structKeyExists(theUrl, 'loc') ) {
+			if ( NOT structKeyExists(arguments.source, 'loc') ) {
 				throwError('loc key is required for each collection item.');
 			}
 
-			result.loc = getLocPrefix() & theUrl.loc & getLocSuffix();
+			loc = cleanLoc( arguments.source.loc );
 
-			if ( NOT isValid('URL', result.loc) ) {
-				throwError('loc must be a valid URL.');
+			if ( structKeyExists(arguments.source, 'lastmod') ) {
+				lastmod = cleanLastMod( arguments.source.lastmod );
 			}
 
-			if ( structKeyExists(theUrl, 'lastmod')
-					AND ( NOT isSimpleValue(theUrl.lastmod) OR ( isSimpleValue(theUrl.lastmod) AND theUrl.lastmod NEQ '' ) )
-			) {
-				if ( isValid('date', theUrl.lastmod) ) {
-					result.lastmod = formatAsW3CDateTime(theUrl.lastmod);
-				} else if ( isW3cDateTimeFormat(theUrl.lastmod) ) {
-					result.lastmod = theUrl.lastmod;
-				} else {
-					throwError('lastmod must be a valid CFML date/time string or object, or a properly formatted W3C datetime string.');
-				}
+			if ( structKeyExists(arguments.source, 'changefreq') ) {
+				changefreq = cleanChangeFreq( arguments.source.changefreq );
 			}
 
-			if ( structKeyExists(theUrl, 'changefreq') AND isSimpleValue(theUrl.changefreq) AND theUrl.changefreq NEQ '' ) {
-				if ( NOT listFindNoCase(variables.CHANGEFREQ_VALUES, theUrl.changefreq) ) {
-					throwError('changefreq must be one of: #variables.CHANGEFREQ_VALUES#.');
-				}
-				result.changefreq = lCase(theUrl.changefreq);
+			if ( structKeyExists(arguments.source, 'priority') ) {
+				priority = cleanPriority( arguments.source.priority );
 			}
 
-			if ( structKeyExists(theUrl, 'priority') AND isSimpleValue(theUrl.priority) AND theUrl.priority NEQ '' ) {
-				if ( NOT isValid('range', theUrl.priority, 0, 1) ) {
-					throwError('priority valid values range from 0.0 to 1.0.');
-				}
-				result.priority = numberFormat(theUrl.priority, '0.9');
-			}
+			result.loc = loc;
+			if ( len( lastmod ) )    result.lastmod    = lastmod;
+			if ( len( changefreq ) ) result.changefreq = changefreq;
+			if ( len( priority ) )   result.priority   = priority;
 
 			return result;
 		</cfscript>
