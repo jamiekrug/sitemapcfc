@@ -140,15 +140,20 @@ DOCUMENT INFORMATION:
 		<cfargument name="changefreq" type="any" required="true" />
 
 		<cfscript>
-			var result = '';
+			var result = getDefaults().changefreq;
 
-			if ( isSimpleValue( arguments.changefreq ) ) arguments.changefreq = trim( arguments.changefreq );
+			if ( NOT isSimpleValue( arguments.changefreq ) ) {
+				throwError( 'changefreq must be a valid string.' );
+			}
+
+			arguments.changefreq = trim( arguments.changefreq );
 
 			if ( len( arguments.changefreq ) ) {
-				if ( NOT listFindNoCase( variables.CHANGEFREQ_VALUES, arguments.changefreq ) ) {
-					throwError( 'changefreq must be one of: #variables.CHANGEFREQ_VALUES#.' );
-				}
 				result = lCase( arguments.changefreq );
+			}
+
+			if ( len( result ) AND NOT listFindNoCase( variables.CHANGEFREQ_VALUES, result ) ) {
+				throwError( 'changefreq must be one of: #variables.CHANGEFREQ_VALUES#.' );
 			}
 
 			return result;
@@ -160,14 +165,22 @@ DOCUMENT INFORMATION:
 		<cfargument name="lastmod" type="any" required="true" />
 
 		<cfscript>
-			var result = '';
+			var result = getDefaults().lastmod;
 
-			if ( isSimpleValue( arguments.lastmod ) ) arguments.lastmod = trim( arguments.lastmod );
+			if ( NOT isSimpleValue( arguments.lastmod ) ) {
+				throwError( 'lastmod must be a valid string.' );
+			}
+
+			arguments.lastmod = trim( arguments.lastmod );
 
 			if ( isValid( 'date', arguments.lastmod ) ) {
 				result = formatAsW3CDateTime( arguments.lastmod );
 			} else if ( isW3cDateTimeFormat( arguments.lastmod ) ) {
 				result = arguments.lastmod;
+			}
+
+			if ( len( result ) AND NOT isW3cDateTimeFormat( result ) ) {
+				throwError( 'lastmod must be a valid CFML date string or object, or a valid W3C Datetime string.' );
 			}
 
 			return result;
@@ -198,15 +211,20 @@ DOCUMENT INFORMATION:
 		<cfargument name="priority" type="any" required="true" />
 
 		<cfscript>
-			var result = '';
+			var result = getDefaults().priority;
 
-			if ( isSimpleValue( arguments.priority ) ) arguments.priority = trim( arguments.priority );
+			if ( NOT isSimpleValue( arguments.priority ) ) {
+				throwError( 'priority must be a valid string.' );
+			}
+
+			arguments.priority = trim( arguments.priority );
 
 			if ( len( arguments.priority ) ) {
-				if ( NOT isValid( 'range', arguments.priority, 0, 1 ) ) {
-					throwError( 'priority valid values range from 0.0 to 1.0.' );
-				}
 				result = numberFormat( arguments.priority, '0.9' );
+			}
+
+			if ( len( result ) AND NOT isValid( 'range', result, 0, 1 ) ) {
+				throwError( 'priority valid values range from 0.0 to 1.0.' );
 			}
 
 			return result;
@@ -230,19 +248,16 @@ DOCUMENT INFORMATION:
 
 			loc = cleanLoc( arguments.source.loc );
 
-			if ( structKeyExists(arguments.source, 'lastmod') ) {
-				lastmod = cleanLastMod( arguments.source.lastmod );
-			}
+			if ( structKeyExists(arguments.source, 'lastmod') )    lastmod =    arguments.source.lastmod;
+			if ( structKeyExists(arguments.source, 'changefreq') ) changefreq = arguments.source.changefreq;
+			if ( structKeyExists(arguments.source, 'priority') )   priority =   arguments.source.priority;
 
-			if ( structKeyExists(arguments.source, 'changefreq') ) {
-				changefreq = cleanChangeFreq( arguments.source.changefreq );
-			}
-
-			if ( structKeyExists(arguments.source, 'priority') ) {
-				priority = cleanPriority( arguments.source.priority );
-			}
+			lastmod = cleanLastMod( lastmod );
+			changefreq = cleanChangeFreq( changefreq );
+			priority = cleanPriority( priority );
 
 			result.loc = loc;
+
 			if ( len( lastmod ) )    result.lastmod    = lastmod;
 			if ( len( changefreq ) ) result.changefreq = changefreq;
 			if ( len( priority ) )   result.priority   = priority;

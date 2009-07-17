@@ -527,6 +527,47 @@
 	</cffunction>
 
 
+	<!--- MISC. TESTS: --->
+
+
+	<cffunction name="test_defaults" returntype="void" access="public" output="false">
+		<cfscript>
+			var sitemap = createSitemap();
+			var actual = '';
+			var collection = arrayNew(1);
+			var defaults = structNew();
+			var expected = arrayNew(1);
+
+			collection[1] = structNew();
+			collection[1].loc = 'http://host/page1';
+			collection[1].changefreq = 'weekly';
+			collection[1].lastmod = '7/16/2009';
+			collection[1].priority = '1.0';
+			collection[2] = structNew();
+			collection[2].loc = 'http://host/page2';
+
+			defaults.changefreq = 'monthly';
+			defaults.lastmod = '2009-07-16';
+			defaults.priority = '0.5';
+
+			expected[1] = structNew();
+			expected[1].loc = collection[1].loc;
+			expected[1].changefreq = collection[1].changefreq;
+			expected[1].lastmod = '2009-07-16';
+			expected[1].priority = collection[1].priority;
+			expected[2] = structNew();
+			expected[2].loc = collection[2].loc;
+			expected[2].changefreq = defaults.changefreq;
+			expected[2].lastmod = defaults.lastmod;
+			expected[2].priority = defaults.priority;
+
+			actual = sitemap.init( collection=collection, defaults=defaults ).getCollection();
+
+			assertEquals( expected , actual );
+		</cfscript>
+	</cffunction>
+
+
 	<!--- PRIVATE METHODS: --->
 
 
