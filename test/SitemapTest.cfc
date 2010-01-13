@@ -591,7 +591,7 @@
 
 
 	<cffunction name="createSitemap" returntype="sitemap.Sitemap" access="private" output="false">
-		<cfreturn createObject('component', 'sitemap.Sitemap').init('') />
+		<cfreturn createObject('component', 'sitemap.Sitemap').init() />
 	</cffunction>
 
 
